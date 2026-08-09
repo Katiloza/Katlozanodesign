@@ -1,12 +1,18 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { fileURLToPath, URL } from 'node:url'
+import tailwindcss from '@tailwindcss/vite'
+import path from 'node:path'
 
+/**
+ * Mirrors the Figma Make project's config. The Figma-only plugins
+ * (site.json shell, error-overlay replay, refresh fallback, kit route)
+ * are omitted — they serve the Make editor and have no effect on render.
+ */
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@': path.resolve(__dirname, './src'),
     },
   },
 })
