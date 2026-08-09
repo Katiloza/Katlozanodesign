@@ -1,0 +1,63 @@
+/* ── Design tokens ────────────────────────────────────────────────
+   Palette carried over from the Figma Make direction. Every accent
+   below is contrast-checked as text on --canvas:
+     magenta #c008b1 → 5.06:1
+     rust    #a4400f → 5.97:1
+     teal    #14655a → 6.51:1
+     ink     #422b2a → 12.3:1
+     muted   #6d5652 → 6.38:1
+   Accent is never the only signal — each card also carries a rule,
+   a numeral, and an orientation change.
+   ───────────────────────────────────────────────────────────────── */
+
+:root {
+  color-scheme: light;
+
+  /* Surface */
+  --canvas: #faf8f4;
+  --canvas-raised: #f3f0e9;
+  --canvas-sunken: #eceae3;
+
+  /* Ink — three levels, matching the three levels of hierarchy */
+  --ink: #1a1009;
+  --ink-warm: #422b2a;
+  --ink-muted: #6d5652;
+
+  /* Hairlines */
+  --rule: rgba(66, 43, 42, 0.16);
+  --rule-strong: rgba(66, 43, 42, 0.32);
+
+  /* Default accent — each card overrides --accent locally */
+  --accent: #c008b1;
+
+  /* Type */
+  --font-script: 'Dancing Script', cursive;
+  --font-display: 'Crimson Pro', Georgia, serif;
+  --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Motion — one easing, site-wide, 150–400ms */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dur-fast: 150ms;
+  --dur: 240ms;
+  --dur-slow: 400ms;
+
+  /* Rhythm */
+  --gutter: clamp(20px, 4vw, 48px);
+  --card-gap: clamp(20px, 3vw, 44px);
+
+  /* Texture — one system, derived from the script logo's stroke angle
+     (~62°). A fine ink hatch plus a soft grain. Reused everywhere. */
+  --texture-hatch: repeating-linear-gradient(
+    62deg,
+    rgba(66, 43, 42, 0.05) 0px,
+    rgba(66, 43, 42, 0.05) 1px,
+    transparent 1px,
+    transparent 7px
+  );
+  --texture-grain: radial-gradient(
+    circle at 50% 50%,
+    rgba(66, 43, 42, 0.04) 0.5px,
+    transparent 0.6px
+  );
+  --texture-grain-size: 5px 5px;
+}

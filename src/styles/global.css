@@ -1,0 +1,529 @@
+@import './tokens.css';
+
+/* ── Reset ─────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  /* `clip`, not `hidden` — `hidden` would make this a scroll container and
+     kill the sticky pin in the work strip. */
+  overflow-x: clip;
+}
+
+body {
+  margin: 0;
+  background-color: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p,
+figure {
+  margin: 0;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
+
+/* ── Focus ─────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--ink-warm);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--gutter);
+  top: -100px;
+  z-index: 100;
+  padding: 10px 16px;
+  background: var(--ink-warm);
+  color: var(--canvas);
+  font-size: 13px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: top var(--dur) var(--ease);
+}
+
+.skip-link:focus-visible {
+  top: 12px;
+  outline-color: var(--accent);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── Sticky top bar ────────────────────────────────────────────── */
+.nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: clamp(18px, 2.4vw, 30px) var(--gutter) clamp(14px, 1.8vw, 22px);
+  background-color: color-mix(in srgb, var(--canvas) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid transparent;
+  transition:
+    border-color var(--dur) var(--ease),
+    background-color var(--dur) var(--ease);
+}
+
+.nav[data-scrolled='true'] {
+  border-bottom-color: var(--rule);
+}
+
+.nav__wordmark {
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--ink-warm);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nav__center {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.nav__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background-color: rgba(66, 43, 42, 0.05);
+  color: var(--ink-warm);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+/* The bar doubles as wayfinding: it names the section you're in. */
+.nav__here {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  transition: color var(--dur) var(--ease);
+}
+
+.nav__here[data-active='work'] {
+  color: var(--accent);
+}
+
+.nav__connect {
+  font-family: var(--font-display);
+  font-size: clamp(18px, 2vw, 24px);
+  line-height: 1;
+  color: var(--ink-warm);
+  text-decoration: none;
+  padding-bottom: 2px;
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--dur) var(--ease);
+  white-space: nowrap;
+}
+
+.nav__connect:hover,
+.nav__connect:focus-visible {
+  border-bottom-color: var(--ink-warm);
+}
+
+/* ── Hero ──────────────────────────────────────────────────────── */
+.hero {
+  padding: clamp(120px, 15vh, 190px) var(--gutter) clamp(32px, 6vh, 64px);
+}
+
+.hero__line {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(28px, 5.2vw, 58px);
+  line-height: 1.06;
+  letter-spacing: -0.025em;
+  color: var(--ink-warm);
+  max-width: 18ch;
+  text-wrap: balance;
+}
+
+.hero__meta {
+  margin-top: clamp(20px, 3vh, 34px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.hero__meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hero__meta span + span::before {
+  content: '';
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--rule-strong);
+}
+
+/* ── Work strip ────────────────────────────────────────────────── */
+.work {
+  position: relative;
+  /* --scroll-distance is measured and set from JS in pinned mode. */
+  height: calc(100svh + var(--scroll-distance, 0px));
+}
+
+.work__sticky {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.work__track {
+  display: flex;
+  align-items: center;
+  gap: var(--card-gap);
+  padding-inline: var(--gutter);
+  width: max-content;
+  transform: translate3d(var(--track-x, 0px), 0, 0);
+  will-change: transform;
+}
+
+/* ── Project card ──────────────────────────────────────────────── */
+.card {
+  --card-h: clamp(420px, 66svh, 640px);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-shrink: 0;
+  height: var(--card-h);
+  padding: clamp(22px, 2.4vw, 34px);
+  background-color: var(--canvas-raised);
+  background-image: var(--texture-grain);
+  background-size: var(--texture-grain-size);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  text-decoration: none;
+  color: var(--ink-warm);
+  overflow: hidden;
+  transition:
+    transform var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+
+/* Orientation is the second variable per study — accent never travels alone.
+   Widths are deliberately generous: with three studies the strip has to be
+   meaningfully wider than the viewport or the pin has nothing to move. */
+.card[data-orientation='landscape'] {
+  width: min(84vw, 860px);
+}
+.card[data-orientation='square'] {
+  width: min(74vw, 660px);
+}
+.card[data-orientation='portrait'] {
+  width: min(64vw, 520px);
+}
+
+.card:hover,
+.card:focus-visible {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+/* Accent rule — the non-color signal that pairs with --accent. */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background-color: var(--accent);
+}
+
+/* Logo-derived hatch, angled off the top-right corner. */
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--texture-hatch);
+  -webkit-mask-image: linear-gradient(215deg, #000 0%, transparent 42%);
+  mask-image: linear-gradient(215deg, #000 0%, transparent 42%);
+  pointer-events: none;
+}
+
+.card__top,
+.card__bottom {
+  position: relative;
+  z-index: 1;
+}
+
+/* Optional hero image — takes the card's open middle when present. */
+.card__media {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  margin: clamp(16px, 2vh, 24px) 0 0;
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card__index {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+}
+
+.card__kicker {
+  margin-top: 4px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.card__title {
+  margin-top: clamp(14px, 2vh, 22px);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(26px, 3.2vw, 40px);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.card__outcome {
+  margin-top: 12px;
+  font-size: clamp(14px, 1.2vw, 16px);
+  line-height: 1.45;
+  color: var(--ink-muted);
+  max-width: 34ch;
+}
+
+.card__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule);
+  font-size: 12.5px;
+  color: var(--ink-muted);
+}
+
+.card__role {
+  color: var(--ink-warm);
+  font-weight: 500;
+}
+
+.card__cta {
+  margin-left: auto;
+  color: var(--accent);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ── Progress rail ─────────────────────────────────────────────── */
+.rail {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(24px, 4vh, 44px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rail__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background-color: var(--rule-strong);
+  transition:
+    width var(--dur-slow) var(--ease),
+    background-color var(--dur-slow) var(--ease);
+}
+
+.rail__dot[aria-current='true'] {
+  width: 24px;
+  background-color: var(--dot-accent);
+}
+
+.rail__dot:focus-visible {
+  outline-offset: 5px;
+}
+
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(56px, 8vh, 82px);
+  transform: translateX(-50%);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity var(--dur-slow) var(--ease);
+}
+
+/* ── Static fallback: narrow viewports and reduced motion ──────── */
+.work[data-mode='static'] {
+  height: auto;
+  padding-bottom: clamp(48px, 8vh, 96px);
+}
+
+.work[data-mode='static'] .work__sticky {
+  position: static;
+  height: auto;
+  overflow: visible;
+}
+
+.work[data-mode='static'] .work__track {
+  flex-direction: column;
+  align-items: stretch;
+  width: auto;
+  gap: clamp(16px, 3vh, 28px);
+  transform: none;
+  will-change: auto;
+}
+
+.work[data-mode='static'] .card,
+.work[data-mode='static'] .card[data-orientation='landscape'],
+.work[data-mode='static'] .card[data-orientation='square'],
+.work[data-mode='static'] .card[data-orientation='portrait'] {
+  width: 100%;
+  height: auto;
+  min-height: 300px;
+  gap: clamp(28px, 6vh, 56px);
+}
+
+.work[data-mode='static'] .rail,
+.work[data-mode='static'] .hint {
+  display: none;
+}
+
+.work__heading {
+  padding: 0 var(--gutter) clamp(16px, 3vh, 28px);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.work[data-mode='pinned'] .work__heading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── Narrow viewports (down to 360px) ──────────────────────────── */
+@media (max-width: 720px) {
+  .nav__here {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .nav {
+    flex-wrap: wrap;
+    row-gap: 10px;
+    padding-top: 16px;
+    padding-bottom: 12px;
+  }
+
+  /* Wordmark and Connect keep the top row; the status chip drops below. */
+  .nav__center {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .hero__line {
+    max-width: none;
+  }
+
+  .hero {
+    padding-top: 132px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
