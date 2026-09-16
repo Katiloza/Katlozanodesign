@@ -1,16 +1,32 @@
-@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&display=swap');
 @import 'tailwindcss';
 
+/* ── Design tokens ────────────────────────────────────────────────
+   Hexes are the ones Figma reports for the Portfolio file
+   (Dev Mode → Colors). Tailwind's codegen approximates these as
+   stone-800 / stone-400 / zinc-100 etc; the real values are here. */
 @theme {
-  --color-canvas: #faf8f4;
-  --color-ink: #1a1009;
-  --color-warm: #422b2a;
-  --color-warm-light: #eceae3;
-  --color-accent: #c008b1;
+  --color-ink: #422b2a;          /* headings, body, logo            */
+  --color-muted: #958988;        /* secondary text, inactive tabs   */
+  --color-rule: #f4f4f5;         /* hairline dividers               */
+  --color-dot: #f3f3f3;          /* page dot-grid                   */
+  --color-tan: #e9d7c4;          /* active mode pill                */
+  --color-pill: rgba(228, 228, 231, 0.6); /* active page tab        */
+  --color-live: #10b981;         /* "Working on something cool?"    */
+  --color-live-bg: #ecfdf5;
+  --color-chrome: #f8fafc;       /* browser title bar               */
+  --color-chrome-line: #e2e8f0;
+  --color-chrome-text: #475569;
+  --color-label-violet: #2f01ab;
+  --color-label-neutral: #222222;
+
+  /* Figma calls the logo face "Dreamboat"; Dancing Script Bold is the
+     closest webfont. Drop the licensed file in and this token is the
+     only place that needs changing. */
+  --font-script: 'Dreamboat', 'Dancing Script', cursive;
+  --font-hand: 'Caveat', cursive;
 }
 
 :root {
@@ -22,36 +38,49 @@ html {
 }
 
 body {
-  background-color: #faf8f4;
-  color: #1a1009;
-  font-family: 'Inter', sans-serif;
+  margin: 0;
+  background-color: #fff;
+  color: var(--color-ink);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Parallax scroll section: hide scrollbar while scrolling */
-.parallax-track {
-  will-change: transform;
-  transition: transform 0.05s linear;
+/* The page sits on a 4px dot every 24px, #F3F3F3 — measured off the
+   Figma export rather than guessed. */
+.dot-grid {
+  background-image: radial-gradient(var(--color-dot) 1.9px, transparent 2px);
+  background-size: 24px 24px;
+  background-position: 8px 8px;
 }
 
-/* Hide scrollbar globally while keeping scroll functionality */
+/* Figma calls this face "Dreamboat". Dancing Script Bold is the
+   closest webfont; swap in the licensed file here if you have it. */
+@font-face {
+  font-family: 'Dreamboat';
+  font-style: normal;
+  font-weight: 700;
+  src: local('Dancing Script Bold'), local('DancingScript-Bold');
+}
+
 ::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(66, 43, 42, 0.2);
-  border-radius: 2px;
+  background: rgba(66, 43, 42, 0.18);
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(66, 43, 42, 0.4);
+  background: rgba(66, 43, 42, 0.35);
 }
 
-/* Font face declarations for imported design fonts */
-@font-face {
-  font-family: 'Dreamboat';
-  font-style: normal;
-  font-weight: 400;
-  src: local('Dancing Script Bold');
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

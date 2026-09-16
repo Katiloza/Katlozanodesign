@@ -2,9 +2,20 @@
 
 UX design portfolio — Kat Lozano.
 
-This is a direct port of the Figma Make prototype
-(`figma.com/make/7J4917Ro4dxZjNHIO5iUFc`). `src/App.tsx`, `src/index.css`, and
-`src/imports/` are the generated Make output, copied verbatim.
+A hand-written implementation of five Figma frames from
+[`figma.com/design/Uv2kYZfXVNNelZO0aoVjFP`](https://www.figma.com/design/Uv2kYZfXVNNelZO0aoVjFP/Portfolio):
+
+| Node     | Frame                | What it is                                  |
+| -------- | -------------------- | ------------------------------------------- |
+| `1:5`    | Portfolio work page  | Carousel, mCRPC card active, neighbour left  |
+| `1:126`  | Portfolio work page  | Carousel, token card active, neighbour right |
+| `1:247`  | Portfolio work page  | Fidget mode, resting                         |
+| `7:19`   | Portfolio work page  | Fidget mode, card hovered                    |
+| `1:374`  | Portfolio about page | About                                        |
+
+The five frames are two pages (`work`, `about`) × two work modes
+(`carousel`, `fidget`), plus fidget's hover state — so they're built as
+state, not as five separate screens. Every frame shares one chrome.
 
 ## Run
 
@@ -15,60 +26,76 @@ npm run dev
 
 `npm run build` type-checks and emits `dist/` (static, Vercel-ready).
 
+## Layout approach
+
+All five frames are 1440 wide and put every block at the same fixed y:
+nav `0`, masthead `111`, view bar `278`, stage `402`, footer `1298`.
+`App.tsx` lays those out absolutely at exactly those coordinates and
+scales the whole 1440 board down to narrower viewports. That's what keeps
+it on the design; it also means there is **no responsive reflow** — below
+1440 the page shrinks rather than rearranging. Design mobile frames and
+this is the thing to revisit.
+
 ## Structure
 
-- `src/App.tsx` — nav, hero, and the 450vh scroll-jacked strip. Make output, with
-  the strip swapped to the SVG export (see below).
-- `src/assets/work-card-container.svg` — **the card layout source of truth.**
-  A 4502×783 flat export of the whole strip.
-- `src/index.css` — font imports, `@theme` tokens, scrollbar styling. Verbatim from Make.
-- `src/imports/` — the original generated Make components. No longer rendered;
-  kept for reference. Not bundled, since nothing imports them.
+- `src/App.tsx` — page/mode/carousel state and the 1440 artboard.
+- `src/components/Chrome.tsx` — nav, masthead, view bar, footer.
+- `src/components/CarouselStage.tsx` — the active card plus one peeking
+  neighbour, rendered as a sliver of that card's own backdrop.
+- `src/components/FidgetStage.tsx` — the scattered layout and its hover
+  wash. Positions are measured off frame `1:247`, in frame coordinates.
+- `src/components/AboutPage.tsx` — section rail, portrait, notes window,
+  experience list.
+- `src/components/BrowserWindow.tsx` — the macOS frame and glass label.
+- `src/data/projects.ts` — the case studies, in carousel order.
+- `src/index.css` — tokens (real Figma hexes, not Tailwind's
+  approximations), fonts, dot grid.
+- `figma-refs/` — the 2× frame exports, kept as the visual source of
+  truth to diff against.
 
-## Why the strip is an SVG
+## Where this departs from the frames
 
-The generated `imports/Container` component laid the five cards out as a flex row
-with `gap-32`. The design has no such gap and the cards aren't uniformly spaced,
-so that row rendered them unevenly. The SVG export carries the real geometry —
-black text cards at x=67 and x=3935, the three showcase groups positioned between
-them — so the strip now matches the design exactly.
+- **Carousel order.** `1:5` puts the design-system card immediately left
+  of the mCRPC card; `1:126` puts the mCRPC card immediately right of the
+  token card. Both can't be true of one sequence. `projects.ts` fixes an
+  order and the carousel renders real neighbours, so each frame is a
+  reachable state rather than a transcription.
+- **The design-system card** has no screenshot in the file — only its
+  gradient spine appears. Its backdrop is a CSS gradient sampled off that
+  sliver; `screenshot: null` renders a placeholder until one exists.
+- **Fonts.** Figma's "Dreamboat" and "Dreaming Outloud Script" aren't
+  webfonts here; `--font-script` and `--font-hand` in `index.css` point
+  at Dancing Script and Caveat. Swap the tokens if you have the licences.
 
-To update the cards, re-export the container from Figma over
-`src/assets/work-card-container.svg`. If its dimensions change, update
-`STRIP_WIDTH` / `STRIP_HEIGHT` in `App.tsx` to match.
+## Assets
 
-## The strip
+`src/assets/work/` was cut from the 2× frame exports, not from source
+files:
 
-Five cards, left to right:
+- `card-bg-mcrpc.jpg` / `card-bg-tokens.jpg` — card backdrops. Both had
+  the browser window and label card baked into the crop; the mCRPC label
+  was painted out by interpolation and the token gradient was refitted
+  from its clean border. **Re-export these two image layers from Figma
+  when you get a chance** — the repairs are good enough to ship but they
+  are repairs.
+- `shot-mcrpc.jpg` / `shot-tokens.jpg` — case study screenshots.
+- `fidget-a/b/c.png` — the desk toys. Cropped on their white background
+  rather than with alpha, so the page's dot grid doesn't show through
+  behind them. Raw exports with transparency would fix that.
+- `portrait.jpg` — about page photo.
 
-1. Intro — "UX designer based in Tempe, Arizona." + Experience timeline
-2. Living Interactive Evidence Synthesis (Mayo Clinic mCRPC) — three browser frames
-3. EdPlus course design standards — two browser frames
-4. Sensee — app mockups
-5. Connect — "Don't want to talk about design?"
+Unused leftovers from the extraction pass — `card-bg-tokens-raw.jpg`,
+`portrait.png`, `shot-mcrpc.png`, `shot-tokens.png` — are safe to delete.
+Nothing imports them, so Vite never bundles them.
 
-## Differences from the Make project
+## Known constraints
 
-Only the build shell. The Figma-only Vite plugins (`site.json` document shell,
-error-overlay replay, React Refresh fallback, `/kit.html` route) are omitted —
-they serve the Make editor and have no effect on what renders. `index.html` is a
-plain shell instead of the `<!-- figma:* -->` comment-slot template.
-
-## Known constraints of the generated code
-
-Inherited from Make, not introduced here. Flagged so nobody assumes they were
-handled:
-
-- Fixed-pixel layout at 744px card height. No responsive behaviour; it does not
-  reflow below roughly 1000px.
-- No `prefers-reduced-motion` handling — the scroll-jack always runs.
-- Cards are `div`s, not links. Nothing in the strip is keyboard-reachable, and
-  there are no focus styles.
-- Progress dots are presentational, not controls.
-- The strip SVG is 10.4 MB (6.9 MB gzipped) — the card screenshots are embedded
-  as base64 PNGs. This is by far the page's largest cost and should be addressed
-  before launch: extract the five bitmaps, compress them to WebP, and reference
-  them from the SVG instead of inlining.
-- Card text is outlined in the export, so none of it is selectable, searchable,
-  or available to screen readers. The strip carries a descriptive `alt`, which is
-  a floor, not a fix.
+- No responsive reflow below 1440 (see **Layout approach**).
+- The fidget toys are decorative `img`s, not draggable. The name promises
+  more interaction than the frames specify.
+- `prefers-reduced-motion` is honoured for transitions only.
+- The former Figma Make port — `src/imports/` and
+  `src/assets/work-card-container.svg`, which drove the old 450vh
+  scroll-jacked strip — is no longer rendered or imported, so it isn't
+  bundled. It's still on disk (10MB of it) and implements an older
+  design; delete both when you're happy with this build.
