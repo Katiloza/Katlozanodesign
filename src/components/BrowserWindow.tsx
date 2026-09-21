@@ -12,6 +12,10 @@ export function BrowserWindow({
   style,
   className = '',
   chromeWidth,
+  opacity,
+  dotsOpacity,
+  onShotEnter,
+  onShotLeave,
 }: {
   url: string
   screenshot: string | null
@@ -20,14 +24,29 @@ export function BrowserWindow({
   className?: string
   /** Width of the address pill; the design uses 320px on wide cards. */
   chromeWidth?: number
+  /** The mcrpc card sits its window at 94% so the artwork reads through. */
+  opacity?: number
+  /** Traffic lights fade in with the caption on the token card. */
+  dotsOpacity?: number
+  onShotEnter?: () => void
+  onShotLeave?: () => void
 }) {
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-[10px] bg-white opacity-95 shadow-[0_4px_24px_rgba(0,0,0,0.08),0_12px_48px_rgba(0,0,0,0.04)] outline outline-1 -outline-offset-1 outline-chrome-line ${className}`}
-      style={style}
+      className={`flex flex-col overflow-hidden rounded-[10px] bg-white shadow-[0_4px_24px_rgba(0,0,0,0.08),0_12px_48px_rgba(0,0,0,0.04)] outline outline-1 -outline-offset-1 outline-chrome-line ${className}`}
+      style={{ opacity, ...style }}
+      onMouseEnter={onShotEnter}
+      onMouseLeave={onShotLeave}
     >
       <div className="flex h-11 shrink-0 items-center justify-between border-b border-chrome-line bg-chrome px-4">
-        <div className="flex items-center gap-2">
+        <div
+          className="flex items-center gap-2"
+          style={
+            dotsOpacity === undefined
+              ? undefined
+              : { opacity: dotsOpacity, transition: 'opacity 200ms ease' }
+          }
+        >
           <span className="size-2.5 rounded-full bg-[#ff5f56]" />
           <span className="size-2.5 rounded-full bg-[#ffbd2e]" />
           <span className="size-2.5 rounded-full bg-[#27c93f]" />
@@ -49,7 +68,14 @@ export function BrowserWindow({
 
       <div className="min-h-0 flex-1 overflow-hidden bg-white">
         {screenshot ? (
-          <img src={screenshot} alt={alt} className="size-full object-cover object-left-top" />
+          /* draggable={false} matters on the fidget cards: a native image
+             drag cancels the pointer stream and kills the throw. */
+          <img
+            src={screenshot}
+            alt={alt}
+            draggable={false}
+            className="size-full object-cover object-left-top"
+          />
         ) : (
           <div className="flex size-full items-center justify-center bg-chrome text-sm text-muted">
             Screenshot pending export
@@ -65,15 +91,25 @@ export function LabelCard({
   title,
   color,
   style,
+  /** Backdrop blur radius: 32px on the fidget cards, 16px in the carousel. */
+  blur = 32,
+  nowrap = false,
 }: {
   title: string
   color: string
   style?: CSSProperties
+  blur?: number
+  nowrap?: boolean
 }) {
   return (
     <div
-      className="flex items-center gap-3 rounded-[20px] bg-white/90 py-3 pl-3 pr-6 shadow-[0_1px_4px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.08)] outline outline-1 -outline-offset-1 outline-black/5 backdrop-blur-lg"
-      style={style}
+      className="box-border flex items-center gap-3 rounded-[20px] bg-white/85 py-3 pl-3 pr-6 shadow-[0_1px_4px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.08)] outline outline-1 -outline-offset-1 outline-black/5"
+      style={{
+        backdropFilter: `blur(${blur}px)`,
+        WebkitBackdropFilter: `blur(${blur}px)`,
+        whiteSpace: nowrap ? 'nowrap' : undefined,
+        ...style,
+      }}
     >
       <span className="flex flex-col gap-1">
         <span

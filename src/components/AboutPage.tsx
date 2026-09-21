@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { CapIcon, PinIcon } from './icons'
 import { experience } from '@/data/projects'
-import portrait from '@/assets/work/portrait.png'
+import portrait from '@/assets/work/portrait.jpg'
 
 type Section = 'hi' | 'experience' | 'community'
 
@@ -11,8 +11,8 @@ export function AboutPage() {
   const [section, setSection] = useState<Section>('hi')
 
   return (
-    <div className="px-16 pt-10">
-      <div className="flex items-start gap-[18px]">
+    <div data-screen-label="About" style={{ padding: '2px 64px 0' }}>
+      <div className="flex items-start gap-[18px] pt-10">
         <nav className="flex w-52 shrink-0 flex-col items-start gap-2 pb-8">
           {(
             [
@@ -120,9 +120,7 @@ function NotesWindow() {
         <div className="absolute bottom-8 left-6 flex items-end gap-16">
           <span className="flex flex-col gap-2">
             <span className="text-base lowercase leading-4 text-black">best,</span>
-            <span className="font-hand text-xl lowercase leading-4 text-black/50">
-              Kat lozano
-            </span>
+            <span className="font-hand text-xl leading-4 text-black/50">kat lozano</span>
           </span>
           <span className="rotate-[4.74deg] text-2xl leading-6 text-black">{'{ ^-^ }'}</span>
         </div>

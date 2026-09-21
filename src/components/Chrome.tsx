@@ -1,35 +1,55 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { CarouselIcon, FidgetIcon, GitHubIcon, InstagramIcon, LinkedInIcon } from './icons'
 
 export type Page = 'work' | 'about'
 export type Mode = 'carousel' | 'fidget'
 
+/* Every value here is the one the design file reports. The board is 1440
+   wide and the blocks stack in normal flow, so a taller About view pushes
+   the footer down instead of colliding with it. */
+
 /* ── Nav ────────────────────────────────────────────────────────────
-   Frame: 1440×112, pl 56 / pr 44 / pt 36. Logo left, status chip right. */
-export function Nav() {
+   111px tall. Logo left, status chip right. */
+export function Nav({ showStatus = true }: { showStatus?: boolean }) {
   return (
-    <header className="absolute inset-x-0 top-0 h-28">
+    <header className="relative" style={{ height: 111 }}>
       <a
         href="#top"
-        className="absolute left-14 top-9 font-script text-[60px] font-bold leading-10 text-ink"
         aria-label="Kat Lozano — home"
+        className="absolute flex items-center justify-center font-script font-bold italic no-underline"
+        style={{
+          left: 60,
+          top: 37,
+          width: 80,
+          height: 74,
+          fontSize: 64,
+          lineHeight: '44px',
+          letterSpacing: '-0.4px',
+          color: 'var(--color-ink)',
+        }}
       >
         K
       </a>
 
-      <div className="absolute right-11 top-10">
-        <span className="flex items-center gap-1 rounded-full bg-live-bg py-0.5 pl-1.5 pr-2.5">
-          <span className="flex size-4 items-center justify-center">
+      {showStatus && (
+        <div
+          className="absolute box-border flex items-center justify-center whitespace-nowrap rounded-full bg-live-bg"
+          style={{ right: 46, top: 40, height: 28, gap: 4, padding: '2px 10px 2px 6px' }}
+        >
+          <span className="flex size-4 shrink-0 items-center justify-center">
             <span className="size-2 rounded-full bg-live" />
           </span>
-          <span className="text-base leading-6 tracking-tight text-live">
+          <span
+            className="font-semibold text-live"
+            style={{ fontSize: 16, lineHeight: '24px', letterSpacing: '0.08px' }}
+          >
             Working on something cool? Let&rsquo;s{' '}
-            <a href="mailto:kalozan1@asu.edu" className="font-semibold underline">
+            <a href="mailto:kalozan1@asu.edu" className="font-semibold text-live underline">
               connect!
             </a>
           </span>
-        </span>
-      </div>
+        </div>
+      )}
     </header>
   )
 }
@@ -38,23 +58,37 @@ export function Nav() {
    Name + the two-line positioning statement. */
 export function Masthead() {
   return (
-    <div className="absolute inset-x-0 top-[111px] px-16 pt-7">
-      <h1 className="text-4xl font-medium leading-[54px] tracking-wide text-ink">Kat Lozano</h1>
-      <p className="pt-1 text-2xl leading-6 text-ink">
+    <div style={{ padding: '30px 64px 0' }}>
+      <h1
+        className="text-left font-medium text-ink"
+        style={{
+          margin: '16px 0 16px',
+          fontSize: 36,
+          lineHeight: '54px',
+          letterSpacing: '0.45px',
+        }}
+      >
+        Kat Lozano
+      </h1>
+      <p
+        className="text-left text-ink"
+        style={{ margin: '0 0 8px', fontSize: 24, lineHeight: '26px' }}
+      >
         &ldquo;I design to empower the people who matter.&rdquo;
       </p>
-      <p className="text-2xl leading-7 tracking-wide text-muted">
-        Previously worked for EdPlus, Mayo Clinic, and Honeywell aerospace.
+      <p
+        className="m-0 text-left text-muted"
+        style={{ fontSize: 24, lineHeight: '27px', letterSpacing: '0.45px' }}
+      >
+        Previously designed for EdPlus, Mayo Clinic, and Honeywell aerospace.
       </p>
     </div>
   )
 }
 
 /* ── View bar ───────────────────────────────────────────────────────
-   Page tabs on the left, a two-slot mode toggle on the right. The
-   active mode renders as the tan pill, the other as a bare glyph —
-   which is what makes frames 1-5/1-126 (pill left) and 1-247 (pill
-   right) the same control in two states. */
+   Page tabs on the left, the two-slot mode toggle on the right. Both
+   mode slots are pills; only the active one is filled. */
 export function ViewBar({
   page,
   onPage,
@@ -67,63 +101,106 @@ export function ViewBar({
   onMode: (m: Mode) => void
 }) {
   return (
-    <div className="absolute inset-x-0 top-[278px] pt-4">
-      <div className="flex h-10 items-start justify-between px-16">
-        <div className="flex items-start gap-3">
-          {/* The work tab is a fixed 160 in Figma; the About tab hugs. */}
-          <PageTab active={page === 'work'} onClick={() => onPage('work')} minWidth={160}>
+    <div style={{ paddingTop: 10 }}>
+      <div
+        className="box-border flex items-start justify-between"
+        style={{ height: 58, padding: '16px 64px' }}
+      >
+        <div className="flex items-start" style={{ gap: 10 }}>
+          <PageTab
+            active={page === 'work'}
+            onClick={() => onPage('work')}
+            style={{ width: 162, height: 39, padding: '5px 13px' }}
+            glass
+          >
             Featured Work
           </PageTab>
-          <PageTab active={page === 'about'} onClick={() => onPage('about')}>
+          <PageTab
+            active={page === 'about'}
+            onClick={() => onPage('about')}
+            style={{ height: 38, padding: '5px 14px 4px' }}
+          >
             About
           </PageTab>
         </div>
 
-        <div className="flex items-center gap-1.5 rounded-lg p-1.5">
+        <div
+          className="box-border flex items-center justify-end rounded-lg"
+          style={{ height: 42, gap: 6, padding: 6 }}
+        >
           <ModeSlot
             active={mode === 'carousel'}
             onClick={() => onMode('carousel')}
             label="Carousel"
-            icon={<CarouselIcon className={mode === 'carousel' ? 'size-4' : 'size-7'} />}
+            icon={<CarouselIcon className="size-5 shrink-0" />}
           />
           <ModeSlot
             active={mode === 'fidget'}
             onClick={() => onMode('fidget')}
             label="Fidget mode"
-            icon={<FidgetIcon className={mode === 'fidget' ? 'size-5' : 'size-8'} />}
+            icon={<FidgetIcon className="size-5 shrink-0" />}
           />
         </div>
       </div>
 
-      <div className="px-16 pt-3">
-        <div className="h-px bg-rule" />
+      <div style={{ padding: '12px 64px' }}>
+        <div style={{ height: 1, background: 'var(--color-rule)' }} />
       </div>
+      <div style={{ height: 16 }} />
     </div>
   )
 }
+
+/* The design draws the rim light with `outline`. Here it rides on the
+   box-shadow instead (an inset spread ring is pixel-equivalent at 1px), so
+   `outline` stays free for the browser's focus ring. */
+const RIM = 'inset 0 0 0 1px rgba(255,255,255,.5)'
+
+const TAB_ON = {
+  background: 'rgba(228,228,231,0.6)',
+  color: 'var(--color-ink)',
+  boxShadow:
+    '0 2px 8px rgba(0,0,0,0.06), inset 0 -1px 1px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.9)',
+}
+const TAB_OFF = { background: 'transparent', color: 'var(--color-muted)', boxShadow: 'none' }
 
 function PageTab({
   active,
   onClick,
   children,
-  minWidth,
+  style,
+  glass = false,
 }: {
   active: boolean
   onClick: () => void
   children: ReactNode
-  minWidth?: number
+  style?: CSSProperties
+  /** The Featured Work tab carries the rim light and backdrop blur. */
+  glass?: boolean
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      style={active && minWidth ? { minWidth } : undefined}
       aria-current={active ? 'page' : undefined}
-      className={
-        active
-          ? 'rounded-full bg-pill px-3 py-[5px] text-lg font-medium leading-7 tracking-tight text-ink shadow-[0_2px_8px_rgba(0,0,0,0.06),inset_0_-1px_1px_rgba(0,0,0,0.02),inset_0_1px_1px_rgba(255,255,255,0.9)] outline outline-1 -outline-offset-1 outline-white/50 backdrop-blur-md'
-          : 'rounded-full px-3.5 pb-1 pt-[5px] text-lg font-medium leading-7 tracking-tight text-muted transition-colors hover:text-ink'
-      }
+      className="box-border cursor-pointer rounded-full border-0 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+      style={{
+        font: 'inherit',
+        fontSize: 18,
+        fontWeight: 500,
+        lineHeight: '27px',
+        letterSpacing: '0.09px',
+        transition: 'color .15s',
+        ...(active ? TAB_ON : TAB_OFF),
+        ...(glass
+          ? {
+              boxShadow: [active ? TAB_ON.boxShadow : null, RIM].filter(Boolean).join(', '),
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+            }
+          : null),
+        ...style,
+      }}
     >
       {children}
     </button>
@@ -141,82 +218,137 @@ function ModeSlot({
   label: string
   icon: ReactNode
 }) {
-  if (!active) {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        title={label}
-        aria-label={label}
-        className="flex size-8 items-center justify-center text-muted transition-colors hover:text-ink"
-      >
-        {icon}
-      </button>
-    )
-  }
   return (
-    <span className="flex h-7 items-center gap-[3px] overflow-hidden rounded-[100px] bg-tan px-2.5 py-1.5 outline outline-1 -outline-offset-1 outline-ink">
-      <span className="flex items-center justify-center text-ink">{icon}</span>
-      <span className="text-center text-base font-medium leading-3 text-ink">{label}</span>
-    </span>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className="box-border flex shrink-0 cursor-pointer items-center overflow-hidden border-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+      style={{
+        height: 28,
+        gap: 3,
+        borderRadius: 100,
+        padding: '6px 10px',
+        font: 'inherit',
+        background: active ? 'var(--color-tan)' : 'transparent',
+        color: active ? 'var(--color-ink)' : 'var(--color-muted)',
+        // The active ring is a box-shadow, not an outline, so the focus
+        // ring is still available to the browser.
+        boxShadow: `inset 0 0 0 1px ${active ? 'var(--color-ink)' : 'rgba(66,43,42,0)'}`,
+        transition:
+          'background-color 280ms ease-in, color 280ms ease-in, box-shadow 280ms ease-in',
+      }}
+    >
+      {icon}
+      <span
+        className="whitespace-nowrap text-center font-medium"
+        style={{ fontSize: 16, lineHeight: '13.5px', letterSpacing: '-0.3px' }}
+      >
+        {label}
+      </span>
+    </button>
   )
 }
 
 /* ── Footer ─────────────────────────────────────────────────────────
-   Three columns + a centred sign-off. */
+   A four-column grid of 385px tracks plus a centred sign-off. */
 export function Footer({ onPage }: { onPage: (p: Page) => void }) {
   return (
-    <footer className="absolute inset-x-0 top-[1298px] px-16 py-8">
-      <div className="h-px bg-rule" />
+    <footer style={{ padding: '32px 64px', marginTop: 88 }}>
+      <div style={{ height: 1, background: 'var(--color-rule)' }} />
 
-      <div className="flex items-start pt-6">
-        <div className="w-[403px]">
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 385px)',
+          gap: 20,
+          paddingTop: 20,
+        }}
+      >
+        <div>
           <div className="flex items-baseline">
-            <span className="font-script text-4xl font-bold leading-10 text-ink">
+            <span
+              className="font-script font-bold italic text-ink"
+              style={{ fontSize: 36, lineHeight: '44px', letterSpacing: '-0.4px' }}
+            >
               K
             </span>
-            <span className="text-3xl font-medium leading-10 text-ink">at Lozano</span>
+            <span
+              className="font-medium text-ink"
+              style={{ fontSize: 30, lineHeight: '45px' }}
+            >
+              at Lozano
+            </span>
           </div>
-          <p className="text-sm leading-6 text-ink">Made in Tempe, AZ</p>
+          <p
+            className="m-0 text-ink"
+            style={{ fontSize: 13.8125, lineHeight: '24.172px', letterSpacing: '-0.136px' }}
+          >
+            Made in Tempe, AZ
+          </p>
         </div>
 
-        <nav className="flex w-[405px] flex-col items-start gap-2">
-          <button
-            type="button"
-            onClick={() => onPage('work')}
-            className="text-base leading-6 tracking-tight text-muted transition-colors hover:text-ink"
-          >
-            Featured Work
-          </button>
-          <button
-            type="button"
-            onClick={() => onPage('about')}
-            className="text-base leading-6 tracking-tight text-muted transition-colors hover:text-ink"
-          >
-            About
-          </button>
+        <nav className="flex flex-col items-start" style={{ gap: 8 }}>
+          <FooterLink onClick={() => onPage('work')}>Featured Work</FooterLink>
+          <FooterLink onClick={() => onPage('about')}>About</FooterLink>
         </nav>
 
-        <div className="flex flex-1 flex-col items-start gap-4">
-          <p className="text-base leading-6 text-muted">Let&apos;s work together!</p>
-          <div className="flex items-start gap-6 text-ink">
-            <a href="https://www.linkedin.com/" aria-label="LinkedIn" className="opacity-90 hover:opacity-100">
-              <LinkedInIcon className="size-6" />
+        <div className="flex flex-col items-start" style={{ gap: 16 }}>
+          <p className="m-0 text-muted" style={{ fontSize: 16, lineHeight: '24px' }}>
+            Let&apos;s work together!
+          </p>
+          <div className="flex items-start text-ink" style={{ gap: 24 }}>
+            <a
+              href="https://www.linkedin.com/"
+              aria-label="LinkedIn"
+              className="text-ink opacity-90 hover:opacity-100"
+            >
+              <LinkedInIcon className="block size-6" />
             </a>
-            <a href="https://www.instagram.com/" aria-label="Instagram" className="opacity-90 hover:opacity-100">
-              <InstagramIcon className="size-6" />
+            <a
+              href="https://www.instagram.com/"
+              aria-label="Instagram"
+              className="text-ink opacity-90 hover:opacity-100"
+            >
+              <InstagramIcon className="block size-6" />
             </a>
-            <a href="https://github.com/" aria-label="GitHub" className="opacity-90 hover:opacity-100">
-              <GitHubIcon className="size-6" />
+            <a
+              href="https://github.com/"
+              aria-label="GitHub"
+              className="text-ink opacity-90 hover:opacity-100"
+            >
+              <GitHubIcon className="block size-6" />
             </a>
           </div>
         </div>
       </div>
 
-      <p className="pt-[82px] text-center text-sm leading-6">
+      <p
+        className="m-0 text-center"
+        style={{ paddingTop: 64, fontSize: 14, lineHeight: '22.75px' }}
+      >
         <span className="text-muted">Built with love &amp; </span>
         <span className="text-ink">592 matchas, no plans to stop</span>
       </p>
     </footer>
+  )
+}
+
+function FooterLink({ onClick, children }: { onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="cursor-pointer border-0 bg-transparent text-muted transition-colors hover:text-ink"
+      style={{
+        padding: '0 2px',
+        font: 'inherit',
+        fontSize: 16,
+        lineHeight: '24px',
+        letterSpacing: '0.16px',
+      }}
+    >
+      {children}
+    </button>
   )
 }

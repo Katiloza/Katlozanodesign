@@ -1,73 +1,139 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { BrowserWindow, LabelCard } from './BrowserWindow'
+import { CardPhysics } from '@/lib/cardPhysics'
 import type { Project } from '@/data/projects'
-import fidgetA from '@/assets/work/fidget-a.png'
-import fidgetB from '@/assets/work/fidget-b.png'
-import fidgetC from '@/assets/work/fidget-c.png'
 
-/* Fidget mode scatters the work across the page with the desk toys.
-   Every number below is measured off frame 1-247, in frame coordinates
-   (the 1440-wide artboard), with the stage starting at y 401. */
-export const FIDGET_W = 1440
+/* Fidget mode drops the two case studies onto the dot grid and then hands
+   them to the physics sim, so they can be picked up and thrown. Every
+   number below is in stage coordinates: the stage is 1295×924, inset
+   24px from the top of the work area and 42px from the left. */
+export const FIDGET_W = 1295
 export const FIDGET_H = 924
 
-const ORIGIN_Y = 401
+/** Time for the CSS drop-in to land before the simulation takes over. */
+const DROP_SETTLE_MS = 1180
+const GRAVITY = 0.4
 
-const toys = [
-  { src: fidgetA, x: 91, y: 531, w: 300, h: 310, z: 1, alt: 'Pressed-button fidget toy' },
-  { src: fidgetB, x: 428, y: 401, w: 612, h: 572, z: 2, alt: 'Keycap fidget toy' },
-  { src: fidgetC, x: 571, y: 930, w: 278, h: 282, z: 4, alt: 'Second button fidget toy' },
-]
+type Spot = {
+  x: number
+  y: number
+  w: number
+  h: number
+  z: number
+  /** Which drop keyframe, and how the fall is staged. */
+  drop: { name: 'sm' | 'md' | 'lg'; duration: number; delay: number }
+  browser: { x: number; y: number; w: number; h: number; opacity?: number }
+  label: { x: number; y: number; w: number }
+}
 
-/** Where each case study lands on the desk. */
-const cardSpots: Record<string, { x: number; y: number; w: number; h: number; z: number; browser: { x: number; y: number; w: number; h: number } }> = {
+const cardSpots: Record<string, Spot> = {
   tokens: {
-    x: 42,
-    y: 921,
-    w: 506,
-    h: 352,
+    x: 0,
+    y: 571,
+    w: 506.57,
+    h: 353.1,
     z: 3,
-    browser: { x: 0, y: 90, w: 500, h: 263 },
+    drop: { name: 'md', duration: 880, delay: 0 },
+    browser: { x: -30, y: 89, w: 486.3, h: 275.9 },
+    label: { x: 65, y: 20, w: 376 },
   },
   mcrpc: {
-    x: 857,
-    y: 764,
+    x: 815,
+    y: 362.8,
     w: 480,
     h: 549,
     z: 5,
-    browser: { x: -5, y: 80, w: 490, h: 560 },
+    drop: { name: 'lg', duration: 980, delay: 140 },
+    browser: { x: -5, y: 156, w: 490, h: 661, opacity: 0.94 },
+    label: { x: 52, y: 80, w: 376 },
   },
 }
 
 function backgroundStyle(p: Project) {
-  return 'image' in p.background
-    ? { backgroundImage: `url(${p.background.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-    : { background: p.background.css }
+  return {
+    backgroundImage: `url(${p.fidgetBackground.image})`,
+    backgroundSize: p.fidgetBackground.size ?? 'cover',
+    backgroundPosition: p.fidgetBackground.position ?? 'center',
+  }
 }
 
-export function FidgetStage({ projects }: { projects: Project[] }) {
+export function FidgetStage({
+  projects,
+  /** The board's CSS scale, so pointer grabs land on the card. */
+  scale = 1,
+}: {
+  projects: Project[]
+  scale?: number
+}) {
   const [hovered, setHovered] = useState<string | null>(null)
   const placed = projects.filter((p) => cardSpots[p.id])
 
-  return (
-    <div className="relative" style={{ width: FIDGET_W, height: FIDGET_H }}>
-      {toys.map((t) => (
-        <img
-          key={t.src}
-          src={t.src}
-          alt={t.alt}
-          className="pointer-events-none absolute select-none"
-          style={{ left: t.x, top: t.y - ORIGIN_Y, width: t.w, height: t.h, zIndex: t.z }}
-        />
-      ))}
+  const stageRef = useRef<HTMLDivElement>(null)
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  // Read through a ref so the sim always sees the live scale without
+  // needing to be torn down and rebuilt on every resize.
+  const scaleRef = useRef(scale)
+  useEffect(() => {
+    scaleRef.current = scale
+  }, [scale])
 
-      {/* Frame 7-19: hovering a card washes everything else out. */}
-      {hovered && (
+  useEffect(() => {
+    const stage = stageRef.current
+    if (!stage) return
+
+    // Reduced motion collapses the drop-in to ~0ms, so don't leave the
+    // cards looking grabbable but inert for a second first.
+    const settle = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      ? 0
+      : DROP_SETTLE_MS
+
+    let sim: CardPhysics | null = null
+    const timer = window.setTimeout(() => {
+      const els = placed
+        .map((p) => cardRefs.current[p.id])
+        .filter((el): el is HTMLDivElement => Boolean(el))
+      if (els.length) {
+        sim = new CardPhysics(stage, els, {
+          gravity: GRAVITY,
+          getScale: () => scaleRef.current,
+        })
+      }
+    }, settle)
+
+    return () => {
+      window.clearTimeout(timer)
+      sim?.destroy()
+    }
+    // Rebuilt only when the set of cards changes — not on hover or resize.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [placed.map((p) => p.id).join(',')])
+
+  return (
+    <div
+      ref={stageRef}
+      data-screen-label="Fidget mode"
+      className="relative"
+      style={{
+        width: FIDGET_W,
+        height: FIDGET_H,
+        margin: '24px 0 0 42px',
+        animation: 'mode-in 420ms ease-in both',
+      }}
+    >
+      {/* Hovering a card washes everything else out. */}
+      <div
+        className="pointer-events-none absolute"
+        style={{ left: -14, top: 41, width: 1389, height: 883, zIndex: 20 }}
+      >
         <div
-          className="pointer-events-none absolute bg-white/60 transition-opacity"
-          style={{ left: 28, top: 430 - ORIGIN_Y, width: 1389, height: 883, zIndex: 20 }}
+          className="absolute inset-0"
+          style={{
+            background: 'rgba(255,255,255,.58)',
+            opacity: hovered ? 1 : 0,
+            transition: 'opacity 800ms ease-in',
+          }}
         />
-      )}
+      </div>
 
       {placed.map((p) => {
         const s = cardSpots[p.id]
@@ -75,20 +141,30 @@ export function FidgetStage({ projects }: { projects: Project[] }) {
         return (
           <div
             key={p.id}
+            ref={(el) => {
+              cardRefs.current[p.id] = el
+            }}
             onMouseEnter={() => setHovered(p.id)}
             onMouseLeave={() => setHovered(null)}
             onFocus={() => setHovered(p.id)}
             onBlur={() => setHovered(null)}
             tabIndex={0}
-            role="link"
+            /* TODO: once case-study routes exist, make this an <a href> so
+               the "View Case Study" caption is actually actionable. Until
+               then it is a focusable group, not a link, so assistive tech
+               is not promised navigation that does not happen. */
+            role="group"
             aria-label={p.title}
-            className="absolute cursor-pointer rounded-[56px] outline-none focus-visible:ring-2 focus-visible:ring-ink/40"
+            className="absolute cursor-grab select-none rounded-[56px] will-change-transform focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink active:cursor-grabbing"
             style={{
               left: s.x,
-              top: s.y - ORIGIN_Y,
+              top: s.y,
               width: s.w,
               height: s.h,
               zIndex: lifted ? 30 : s.z,
+              // Cards claim the gesture so a drag throws instead of scrolling.
+              touchAction: 'none',
+              animation: `fidget-drop-${s.drop.name} ${s.drop.duration}ms cubic-bezier(.12,.66,.16,1) ${s.drop.delay}ms both`,
             }}
           >
             <div
@@ -99,7 +175,8 @@ export function FidgetStage({ projects }: { projects: Project[] }) {
                 url={p.url}
                 screenshot={p.screenshot}
                 alt={p.title}
-                chromeWidth={200}
+                chromeWidth={320}
+                opacity={s.browser.opacity}
                 style={{
                   position: 'absolute',
                   left: s.browser.x,
@@ -110,14 +187,17 @@ export function FidgetStage({ projects }: { projects: Project[] }) {
               />
             </div>
 
-            {lifted && (
+            <div
+              className="pointer-events-none absolute"
+              style={{ left: s.label.x, top: s.label.y, width: s.label.w }}
+            >
               <LabelCard
                 title={p.title}
                 color={p.labelColor}
-                /* Frame 7-19 puts it at (914, 810) — card-relative (57, 46). */
-                style={{ position: 'absolute', left: 57, top: 46, width: 386 }}
+                blur={32}
+                style={{ opacity: lifted ? 1 : 0, transition: 'opacity 300ms ease-in' }}
               />
-            )}
+            </div>
           </div>
         )
       })}

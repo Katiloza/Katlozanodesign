@@ -35,6 +35,10 @@
 
 html {
   scroll-behavior: smooth;
+  /* The board's scale is derived from the viewport width, and its height
+     from that scale. Reserving the scrollbar gutter stops a scrollbar
+     appearing or vanishing from feeding back into the measurement. */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -43,6 +47,13 @@ body {
   color: var(--color-ink);
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--color-ink);
+}
+a:hover {
+  color: var(--color-muted);
 }
 
 /* The page sits on a 4px dot every 24px, #F3F3F3 — measured off the
@@ -76,11 +87,109 @@ body {
   background: rgba(66, 43, 42, 0.35);
 }
 
+/* ── Motion ───────────────────────────────────────────────────────
+   Traced off the reference clip: a short vertical settle (no horizontal
+   drift, no rotation, no bounce) that fades in early and keeps easing
+   down to the end. Bigger objects fall further and land last. */
+@keyframes fidget-drop-sm {
+  from {
+    transform: translateY(-62px) scale(0.96);
+    opacity: 0;
+  }
+  45% {
+    opacity: 1;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+@keyframes fidget-drop-md {
+  from {
+    transform: translateY(-85px) scale(0.95);
+    opacity: 0;
+  }
+  45% {
+    opacity: 1;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+@keyframes fidget-drop-lg {
+  from {
+    transform: translateY(-105px) scale(0.94);
+    opacity: 0;
+  }
+  45% {
+    opacity: 1;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Switching view fades the new stage in. */
+@keyframes mode-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Carousel content slides in from whichever side the card came from. */
+@keyframes slide-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(48px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes slide-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-48px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The collapsed card's rotated title fades in after the width settles. */
+@keyframes strip-label-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tab-btn-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
   }
 }

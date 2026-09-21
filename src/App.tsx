@@ -1,70 +1,79 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Footer, Masthead, Nav, ViewBar, type Mode, type Page } from '@/components/Chrome'
 import { CarouselStage } from '@/components/CarouselStage'
 import { FidgetStage } from '@/components/FidgetStage'
 import { AboutPage } from '@/components/AboutPage'
-import { projects } from '@/data/projects'
+import { featured } from '@/data/projects'
 
-/* The Figma artboard is 1440 wide and every block sits at a fixed y —
-   nav 0, masthead 111, view bar 278, stage 402, footer 1298 — in all
-   five frames. Laying the page out absolutely at those coordinates and
-   scaling the whole board is what keeps it on the design. */
+/* The design is drawn on a 1440-wide artboard. The board keeps that width
+   and is scaled down to fit narrower viewports; the wrapper is given the
+   scaled height so the page scrolls to the right length. Blocks inside
+   stack in normal flow, so the footer follows the tallest view. */
 const DESIGN_W = 1440
 const DESIGN_H = 1570
 
 export default function App() {
   const [page, setPage] = useState<Page>('work')
   const [mode, setMode] = useState<Mode>('carousel')
-  const [index, setIndex] = useState(1)
+  const [index, setIndex] = useState(featured.length > 1 ? 1 : 0)
 
-  const scale = useDesignScale()
   const boardRef = useRef<HTMLDivElement>(null)
+  const [scale, setScale] = useState(1)
   const [boardHeight, setBoardHeight] = useState(DESIGN_H)
 
-  useEffect(() => {
-    if (!boardRef.current) return
-    const ro = new ResizeObserver(() => {
-      setBoardHeight(boardRef.current?.scrollHeight ?? DESIGN_H)
-    })
-    ro.observe(boardRef.current)
-    return () => ro.disconnect()
-  }, [page, mode])
+  /*
+   * Width comes from the document element, not from the wrapper: the
+   * wrapper's own width depends on whether a scrollbar is showing, which
+   * depends on the height this scale produces. Reading the viewport
+   * directly keeps that out of the loop. Both setters bail on no-op
+   * updates so the ResizeObserver can't retrigger itself indefinitely.
+   */
+  const measure = useCallback(() => {
+    const next = Math.min(1, document.documentElement.clientWidth / DESIGN_W)
+    setScale((cur) => (Math.abs(cur - next) < 0.0005 ? cur : next))
 
-  // Arrow keys walk the carousel.
-  useEffect(() => {
-    if (page !== 'work' || mode !== 'carousel') return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') setIndex((i) => Math.min(projects.length - 1, i + 1))
-      if (e.key === 'ArrowLeft') setIndex((i) => Math.max(0, i - 1))
+    const board = boardRef.current
+    if (board) {
+      const h = board.scrollHeight
+      setBoardHeight((cur) => (Math.abs(cur - h) < 1 ? cur : h))
     }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [page, mode])
+  }, [])
+
+  // Re-measure after the view swaps, before paint, so the wrapper height
+  // never lags a frame behind the content.
+  useLayoutEffect(measure, [measure, page, mode, index])
+
+  useEffect(() => {
+    const board = boardRef.current
+    const ro = new ResizeObserver(measure)
+    if (board) ro.observe(board)
+    window.addEventListener('resize', measure)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('resize', measure)
+    }
+  }, [measure])
 
   return (
     <div id="top" className="dot-grid min-h-screen overflow-x-hidden bg-white">
-      <div style={{ height: boardHeight * scale }}>
+      <div style={{ height: Math.round(boardHeight * scale) }}>
         <div
           ref={boardRef}
           className="relative origin-top-left"
-          style={{ width: DESIGN_W, minHeight: DESIGN_H, transform: `scale(${scale})` }}
+          style={{ width: DESIGN_W, transform: `scale(${scale})` }}
         >
           <Nav />
           <Masthead />
           <ViewBar page={page} onPage={setPage} mode={mode} onMode={setMode} />
 
           {page === 'work' ? (
-            <div className="absolute inset-x-0 top-[402px]">
-              {mode === 'carousel' ? (
-                <CarouselStage projects={projects} index={index} onIndex={setIndex} />
-              ) : (
-                <FidgetStage projects={projects} />
-              )}
-            </div>
+            mode === 'carousel' ? (
+              <CarouselStage projects={featured} index={index} onIndex={setIndex} />
+            ) : (
+              <FidgetStage projects={featured} scale={scale} />
+            )
           ) : (
-            <div className="absolute inset-x-0 top-[349px]">
-              <AboutPage />
-            </div>
+            <AboutPage />
           )}
 
           <Footer onPage={setPage} />
@@ -72,16 +81,4 @@ export default function App() {
       </div>
     </div>
   )
-}
-
-/** Scales the fixed 1440 artboard down to fit narrower viewports. */
-function useDesignScale() {
-  const [scale, setScale] = useState(1)
-  useEffect(() => {
-    const measure = () => setScale(Math.min(1, window.innerWidth / DESIGN_W))
-    measure()
-    window.addEventListener('resize', measure)
-    return () => window.removeEventListener('resize', measure)
-  }, [])
-  return scale
 }
