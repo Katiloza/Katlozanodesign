@@ -8,7 +8,11 @@ import { featured } from '@/data/projects'
 /* The design is drawn on a 1440-wide artboard. The board keeps that width
    and is scaled down to fit narrower viewports; the wrapper is given the
    scaled height so the page scrolls to the right length. Blocks inside
-   stack in normal flow, so the footer follows the tallest view. */
+   stack in normal flow, so the footer follows the tallest view.
+   Scale never exceeds 1 (the board doesn't blow up past its native size
+   on very wide screens), so once the viewport is wider than the board
+   there's leftover width; that gets split evenly as margin so the board
+   sits centered instead of pinned to the left edge. */
 const DESIGN_W = 1440
 const DESIGN_H = 1570
 
@@ -20,6 +24,7 @@ export default function App() {
   const boardRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(1)
   const [boardHeight, setBoardHeight] = useState(DESIGN_H)
+  const [offsetX, setOffsetX] = useState(0)
 
   /*
    * Width comes from the document element, not from the wrapper: the
@@ -29,8 +34,12 @@ export default function App() {
    * updates so the ResizeObserver can't retrigger itself indefinitely.
    */
   const measure = useCallback(() => {
-    const next = Math.min(1, document.documentElement.clientWidth / DESIGN_W)
+    const vw = document.documentElement.clientWidth
+    const next = Math.min(1, vw / DESIGN_W)
     setScale((cur) => (Math.abs(cur - next) < 0.0005 ? cur : next))
+
+    const nextOffset = Math.max(0, (vw - DESIGN_W * next) / 2)
+    setOffsetX((cur) => (Math.abs(cur - nextOffset) < 0.5 ? cur : nextOffset))
 
     const board = boardRef.current
     if (board) {
@@ -60,7 +69,7 @@ export default function App() {
         <div
           ref={boardRef}
           className="relative origin-top-left"
-          style={{ width: DESIGN_W, transform: `scale(${scale})` }}
+          style={{ width: DESIGN_W, marginLeft: offsetX, transform: `scale(${scale})` }}
         >
           <Nav />
           <Masthead />
